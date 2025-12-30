@@ -18,19 +18,29 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <typeparam name="T">Type of the document. Even though documents are schemaless in Meilisearch, making it typed helps in compile time.</typeparam>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> AddDocumentsAsync<T>(IEnumerable<T> documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage responseMessage;
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             responseMessage = await _http.PostJsonCustomAsync(uri, documents, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
@@ -43,17 +53,27 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add as JSON string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> AddDocumentsJsonAsync(string documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -67,10 +87,12 @@ namespace Meilisearch
         /// <param name="documents">Documents to add as CSV string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
         /// <param name="csvDelimiter">One ASCII character used to customize the delimiter for CSV. Comma used by default.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> AddDocumentsCsvAsync(string documents, string primaryKey = default,
             char csvDelimiter = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
@@ -86,6 +108,11 @@ namespace Meilisearch
                 queryString.Add("csvDelimiter", csvDelimiter.ToString());
             }
 
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
             uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
@@ -99,17 +126,27 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add as NDJSON string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> AddDocumentsNdjsonAsync(string documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -123,16 +160,17 @@ namespace Meilisearch
         /// <param name="documents">Documents to add.</param>
         /// <param name="batchSize">Size of documents batches while adding them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <typeparam name="T">Type of the document. Even though documents are schemaless in Meilisearch, making it typed helps in compile time.</typeparam>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> AddDocumentsInBatchesAsync<T>(IEnumerable<T> documents,
-            int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
+            int batchSize = 1000, string primaryKey = default, string customMetadata = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetChunks(batchSize))
             {
-                tasks.Add(await AddDocumentsAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
+                tasks.Add(await AddDocumentsAsync(chunk, primaryKey, customMetadata, cancellationToken).ConfigureAwait(false));
             }
 
             return tasks;
@@ -145,16 +183,18 @@ namespace Meilisearch
         /// <param name="batchSize">Size of documents batches while adding them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
         /// <param name="csvDelimiter">One ASCII character used to customize the delimiter for CSV. Comma used by default.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> AddDocumentsCsvInBatchesAsync(string documents,
             int batchSize = 1000, string primaryKey = default, char csvDelimiter = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetCsvChunks(batchSize))
             {
-                tasks.Add(await AddDocumentsCsvAsync(chunk, primaryKey, csvDelimiter, cancellationToken)
+                tasks.Add(await AddDocumentsCsvAsync(chunk, primaryKey, csvDelimiter, customMetadata, cancellationToken)
                     .ConfigureAwait(false));
             }
 
@@ -167,15 +207,16 @@ namespace Meilisearch
         /// <param name="documents">Documents to add as NDJSON string.</param>
         /// <param name="batchSize">Size of documents batches while adding them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> AddDocumentsNdjsonInBatchesAsync(string documents,
-            int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
+            int batchSize = 1000, string primaryKey = default, string customMetadata = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetNdjsonChunks(batchSize))
             {
-                tasks.Add(await AddDocumentsNdjsonAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
+                tasks.Add(await AddDocumentsNdjsonAsync(chunk, primaryKey, customMetadata, cancellationToken).ConfigureAwait(false));
             }
 
             return tasks;
@@ -186,19 +227,29 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to update.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <typeparam name="T">Type of document. Even though documents are schemaless in Meilisearch, making it typed helps in compile time.</typeparam>
         /// <returns>Returns the task list.</returns>
         public async Task<TaskInfo> UpdateDocumentsAsync<T>(IEnumerable<T> documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage responseMessage;
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             responseMessage = await _http
                 .PutJsonCustomAsync(uri, documents, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken)
@@ -213,17 +264,27 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add as JSON string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> UpdateDocumentsJsonAsync(string documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -236,17 +297,27 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add as CSV string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> UpdateDocumentsCsvAsync(string documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -259,17 +330,27 @@ namespace Meilisearch
         /// </summary>
         /// <param name="documents">Documents to add as NDJSON string.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> UpdateDocumentsNdjsonAsync(string documents, string primaryKey = default,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
             if (primaryKey != default)
             {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
+                queryString.Add("primaryKey", primaryKey);
             }
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -283,16 +364,17 @@ namespace Meilisearch
         /// <param name="documents">Documents to update.</param>
         /// <param name="batchSize">Size of documents batches while updating them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <typeparam name="T">Type of the document. Even though documents are schemaless in Meilisearch, making it typed helps in compile time.</typeparam>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> UpdateDocumentsInBatchesAsync<T>(IEnumerable<T> documents,
-            int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
+            int batchSize = 1000, string primaryKey = default, string customMetadata = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetChunks(batchSize))
             {
-                tasks.Add(await UpdateDocumentsAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
+                tasks.Add(await UpdateDocumentsAsync(chunk, primaryKey, customMetadata, cancellationToken).ConfigureAwait(false));
             }
 
             return tasks;
@@ -304,15 +386,16 @@ namespace Meilisearch
         /// <param name="documents">Documents to update from CSV string.</param>
         /// <param name="batchSize">Size of documents batches while updating them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> UpdateDocumentsCsvInBatchesAsync(string documents,
-            int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
+            int batchSize = 1000, string primaryKey = default, string customMetadata = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetCsvChunks(batchSize))
             {
-                tasks.Add(await UpdateDocumentsCsvAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
+                tasks.Add(await UpdateDocumentsCsvAsync(chunk, primaryKey, customMetadata, cancellationToken).ConfigureAwait(false));
             }
 
             return tasks;
@@ -324,15 +407,16 @@ namespace Meilisearch
         /// <param name="documents">Documents to update from NDJSON string.</param>
         /// <param name="batchSize">Size of documents batches while updating them.</param>
         /// <param name="primaryKey">Primary key for the documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task list.</returns>
         public async Task<IEnumerable<TaskInfo>> UpdateDocumentsNdjsonInBatchesAsync(string documents,
-            int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
+            int batchSize = 1000, string primaryKey = default, string customMetadata = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
             foreach (var chunk in documents.GetNdjsonChunks(batchSize))
             {
-                tasks.Add(await UpdateDocumentsNdjsonAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
+                tasks.Add(await UpdateDocumentsNdjsonAsync(chunk, primaryKey, customMetadata, cancellationToken).ConfigureAwait(false));
             }
 
             return tasks;
@@ -417,12 +501,24 @@ namespace Meilisearch
         /// Delete one document.
         /// </summary>
         /// <param name="documentId">Document identifier.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> DeleteOneDocumentAsync(string documentId,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
-            var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/documents/{documentId}", cancellationToken)
+            var uri = $"indexes/{Uid}/documents/{documentId}";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
+
+            var httpresponse = await _http.DeleteAsync(uri, cancellationToken)
                 .ConfigureAwait(false);
             return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
@@ -432,25 +528,39 @@ namespace Meilisearch
         /// Delete one document by its ID.
         /// </summary>
         /// <param name="documentId">document ID.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> DeleteOneDocumentAsync(int documentId,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
-            return await DeleteOneDocumentAsync(documentId.ToString(), cancellationToken).ConfigureAwait(false);
+            return await DeleteOneDocumentAsync(documentId.ToString(), customMetadata, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Delete documents in batch.
         /// </summary>
         /// <param name="documentIds">List of documents identifier.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
         public async Task<TaskInfo> DeleteDocumentsAsync(IEnumerable<string> documentIds,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
+            var uri = $"indexes/{Uid}/documents/delete-batch";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
+
             var httpresponse =
-                await _http.PostAsJsonAsync($"indexes/{Uid}/documents/delete-batch", documentIds,
+                await _http.PostAsJsonAsync(uri, documentIds,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
@@ -462,15 +572,27 @@ namespace Meilisearch
         /// </summary>
         /// <remarks>Available ONLY with Meilisearch v1.2 and newer.</remarks>
         /// <param name="query">A hash containing a filter that should match documents.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Return the task info.</returns>
         public async Task<TaskInfo> DeleteDocumentsAsync(DeleteDocumentsQuery query,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             try
             {
+                var uri = $"indexes/{Uid}/documents/delete";
+                var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+                if (customMetadata != default)
+                {
+                    queryString.Add("customMetadata", customMetadata);
+                }
+
+                uri = $"{uri}?{queryString}";
+
                 var httpresponse =
-                    await _http.PostAsJsonAsync($"indexes/{Uid}/documents/delete", query,
+                    await _http.PostAsJsonAsync(uri, query,
                             Constants.JsonSerializerOptionsRemoveNulls,
                             cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
@@ -488,23 +610,36 @@ namespace Meilisearch
         /// Delete documents in batch.
         /// </summary>
         /// <param name="documentIds">List of document Id.</param>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Return the task info.</returns>
         public async Task<TaskInfo> DeleteDocumentsAsync(IEnumerable<int> documentIds,
+            string customMetadata = default,
             CancellationToken cancellationToken = default)
         {
             var docIds = documentIds.Select(id => id.ToString());
-            return await DeleteDocumentsAsync(docIds, cancellationToken).ConfigureAwait(false);
+            return await DeleteDocumentsAsync(docIds, customMetadata, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Delete all the documents in the index.
         /// </summary>
+        /// <param name="customMetadata"></param>
         /// <param name="cancellationToken">The cancellation token for this call.</param>
         /// <returns>Returns the task info.</returns>
-        public async Task<TaskInfo> DeleteAllDocumentsAsync(CancellationToken cancellationToken = default)
+        public async Task<TaskInfo> DeleteAllDocumentsAsync(string customMetadata = default, CancellationToken cancellationToken = default)
         {
-            var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/documents", cancellationToken)
+            var uri = $"indexes/{Uid}/documents";
+            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            if (customMetadata != default)
+            {
+                queryString.Add("customMetadata", customMetadata);
+            }
+
+            uri = $"{uri}?{queryString}";
+
+            var httpresponse = await _http.DeleteAsync(uri, cancellationToken)
                 .ConfigureAwait(false);
             return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
